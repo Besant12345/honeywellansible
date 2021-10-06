@@ -1,0 +1,58 @@
+    - name: Create ca certificate and key
+      shell: /usr/local/bin/cockroach cert create-ca --certs-dir=/home/crdbadmin/certs --ca-key=/home/crdbadmin/my-safe-directory/ca.key
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+      #tags: file
+
+    - name: Create NODE_01 certs
+      #command: "{{ cockroach_bin }}cockroach cert create-node {{ node_01 }} {{ node_01_host }} localhost 127.0.0.1 0.0.0.0 {{ lb_ip }} {{ lb_host }} --certs-dir={{ certs_dir }} --ca-key={{ ca_dir }}/ca.key"
+      shell: /usr/local/bin/cockroach cert create-node 10.23.95.21 Test-CRDB-01 localhost 127.0.0.1 0.0.0.0 10.23.95.22 cockroachdb-dev-LB --certs-dir=/home/crdbadmin/certs --ca-key=/home/crdbadmin/my-safe-directory/ca.key
+      #when: ansible_facts['nodename'] == 'Test-CRDB-01'
+    - name: move nodes into node1 certs directory
+      command: "{{ item }}"
+      with_items:
+           
+        - 'mv /home/crdbadmin/certs/node.crt /home/crdbadmin/certs/node1/node.crt'
+        - 'mv /home/crdbadmin/certs/node.key /home/crdbadmin/certs/node1/node.key'
+        - 'cp /home/crdbadmin/certs/ca.crt /home/crdbadmin/certs/node1/ca.crt'
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+
+    - name: Create NODE_02 certs and key
+      # command: "{{ cockroach_bin }}cockroach cert create-node {{ node_02 }} {{ node_02_host }} localhost 127.0.0.1 0.0.0.0 {{ lb_ip }} {{ lb_host }} --certs-dir={{ certs_dir }} --ca-key={{ ca_dir }}/ca.key"
+      shell: /usr/local/bin/cockroach cert create-node 10.23.95.25 Test-CRDB-01 localhost 127.0.0.1 0.0.0.0 10.23.95.22 cockroachdb-dev-LB --certs-dir=/home/crdbadmin/certs --ca-key=/home/crdbadmin/my-safe-directory/ca.key
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+    - name: move nodes into node2 certs directory
+      command: "{{ item }}"
+      with_items:
+              #- 'mkdir /home/crdbadmin/certs/node2'
+        - 'mv /home/crdbadmin/certs/node.crt /home/crdbadmin/certs/node2/node.crt'
+        - 'mv /home/crdbadmin/certs/node.key /home/crdbadmin/certs/node2/node.key'
+        - 'cp /home/crdbadmin/certs/ca.crt /home/crdbadmin/certs/node2/ca.crt'
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+   
+    - name: Create NODE_03 certs and key
+      # command: "{{ cockroach_bin }}cockroach cert create-node {{ node_03 }} {{ node_03_host }} localhost 127.0.0.1 0.0.0.0 {{ lb_ip }} {{ lb_host }} --certs-dir={{ certs_dir }} --ca-key={{ ca_dir }}/ca.key"
+      shell: /usr/local/bin/cockroach cert create-node 10.23.95.22 Test-CRDB-01 localhost 127.0.0.1 0.0.0.0 10.23.95.22 cockroachdb-dev-LB --certs-dir=/home/crdbadmin/certs --ca-key=/home/crdbadmin/my-safe-directory/ca.key
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+    - name: move nodes into node3 certs directory
+      command: "{{ item }}"
+      with_items:
+              #- 'mkdir /home/crdbadmin/certs/node3' 
+        - 'mv /home/crdbadmin/certs/node.crt /home/crdbadmin/certs/node3/node.crt'
+        - 'mv /home/crdbadmin/certs/node.key /home/crdbadmin/certs/node3/node.key'
+        - 'cp /home/crdbadmin/certs/ca.crt /home/crdbadmin/certs/node3/ca.crt'
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+
+    - name: Change certs permission for all nodes 
+      file:
+        path: "{{ item }}"
+        mode: '755'
+        recurse: yes
+      with_items:
+        - "/home/crdbadmin/certs/node1/"
+        - "/home/crdbadmin/certs/node2/"
+        - "/home/crdbadmin/certs/node3/"
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+
+    - name: Create client certs and key 
+      shell: "{{ cockroach_bin }}cockroach cert create-client root --certs-dir={{ certs_dir }} --ca-key={{ ca_dir }}/ca.key"
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'

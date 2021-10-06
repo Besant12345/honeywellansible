@@ -1,0 +1,13 @@
+---
+- hosts: crdb1
+  become: yes
+  tasks:
+   - name: creating directory for restore
+     command: "{{ item }}"
+     with_items:
+       - 'mkdir -m 777 /var/lib/cockroachdb/azuredownload'
+   - name: Restoring the latest backup
+     shell: azcopy copy 'https://cockroachdbbackup.blob.core.windows.net/euclusterbackup/EU_backup_sep20_am/*' '/var/lib/cockroachdb/azuredownload'
+    #when: ansible_facts['nodename'] == 'crdb-nonprod-node01-admin'
+    #tags: file
+

@@ -1,0 +1,111 @@
+    - name: Set Firewalld port 8080 & 26257
+      firewalld:
+        port: "{{ item }}"
+        zone: public
+        permanent: yes
+        state: enabled
+      with_items:
+          - 8080/tcp
+          - 26257/tcp
+      tags: fin
+
+    - name: Reload firewalld
+      shell: firewall-cmd --reload
+      tags: fin
+
+    - name: Move certs for systemd 
+      copy:
+        src: "{{ cockroach_home }}/certs"
+        dest: "/var/lib/cockroach/"
+        mode: '700'
+        remote_src: yes
+      #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: fin
+
+    - name: Change permission for certs
+      file:
+        path: "{{ item }}"
+        mode: '700'
+        remote_src: yes
+      with_items:
+          - "{{ cockroach_home }}/certs/node.crt"
+          - "{{ cockroach_home }}/certs/ca.crt"
+      #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: fin
+
+    - name: Change ownership of certs 
+      file:
+        path: "/var/lib/cockroach/certs"
+        state: directory
+        recurse: yes
+        owner: "{{ usergroup }}"
+        group: "{{ usergroup }}"
+        mode: '700'
+      #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: fin
+
+    - name: Create cockroach service file for Systemd
+      copy:
+        content: |
+          [Unit]
+          Description=Cockroach Database cluster node
+          Requires=network.target
+          [Service]
+          Type=notify
+          WorkingDirectory=/var/lib/cockroach
+          ExecStart=/usr/local/bin/cockroach start --certs-dir=certs --listen-addr={{ ansible_default_ipv4.address }}:26257 --join={{ node_01 }},{{ node_02 }},{{ node_03 }} --cache=.25 --max-sql-memory=.25
+          TimeoutStopSec=60
+          Restart=always
+          RestartSec=10
+          StandardOutput=syslog
+          StandardError=syslog
+          SyslogIdentifier=cockroach
+          User=cockroach
+          [Install]
+          WantedBy=default.target
+        dest: /etc/systemd/system/securecockroachdb.service
+        mode: '755'
+        #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: fin
+
+    - name: Make sure cockroachdb service is running & enabled auto start on boot
+      systemd:
+        name: securecockroachdb
+        state: started
+        daemon_reload: yes
+        enabled: yes
+        #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: fin
+
+    - name: wait 10 seconds for cockroach to start and continue play 
+      pause:
+        seconds: 10
+      tags: fin
+
+    - name: check status of cockroachdb
+      shell: systemctl status securecockroachdb.service
+      register: stat
+      #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: fin
+
+    - debug: var=stat.stdout_lines
+      #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: fin 
+
+    - name: initialize cockroachdb from client
+      shell: "{{ cockroach_bin }}cockroach init --certs-dir={{ certs_dir }} --host={{ node_01 }}"
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+      tags: fin
+
+    - name: Update ownership and permission
+      file:
+        path: "{{ item }}"
+        state: directory
+        recurse: yes
+        owner: "{{ osname }}"
+        group: "{{ osname }}"
+        mode: '700'
+      with_items:
+        - "{{ certs_dir }}"
+        - "{{ ca_dir }}"
+      tags: find

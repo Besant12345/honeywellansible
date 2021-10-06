@@ -1,0 +1,87 @@
+# - hosts: crdb1
+#   become: yes
+#   vars_files:
+#     - vars.yml
+
+#   tasks:
+    # - name: remove certs
+    #   file:
+    #     path: "{{ item }}"
+    #     state: absent
+    #   with_items:
+    #     - "{{ certs_dir }}/node.crt"
+    #     - "{{ certs_dir }}/node.key"
+    #     - "{{ certs_dir }}/ca.crt"
+    #   when: ansible_facts['nodename'] != 'crdb-forge-client'
+    #   tags: end 
+
+- name: Fetch node1 certs from the client machine to local
+#  run_once: yes
+  fetch:
+    src: "{{ item }}"
+    dest: "/tmp/node1/"
+    flat: yes
+  with_items:
+    - "{{ certs_dir }}/node1/node.crt"
+    - "{{ certs_dir }}/node1/node.key"
+    - "{{ certs_dir }}/node1/ca.crt"
+  #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+  tags: rob    
+
+- name: Fetch node2 certs from the client machine to local
+#  run_once: yes
+  fetch:
+    src: "{{ item }}"
+    dest: "/tmp/node2/"
+    flat: yes
+  with_items:
+    - "{{ certs_dir }}/node2/node.crt"
+    - "{{ certs_dir }}/node2/node.key"
+    - "{{ certs_dir }}/node2/ca.crt"
+  #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+  tags: rob 
+- name: Fetch node3 certs from the client machine to local
+ # run_once: yes
+  fetch:
+    src: "{{ item }}"
+    dest: "/tmp/node3/"
+    flat: yes
+  with_items:
+    - "{{ certs_dir }}/node3/node.crt"
+    - "{{ certs_dir }}/node3/node.key"
+    - "{{ certs_dir }}/node3/ca.crt"
+  #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+  tags: rob 
+- name: upload certs to node 1
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src: '/tmp/node1/node.crt',dest: '{{ certs_dir }}/node.crt', mode: '0755'}
+    - { src: '/tmp/node1/node.key',dest: '{{ certs_dir }}/node.key', mode: '0755'}
+    - { src: '/tmp/node1/ca.crt',dest: '{{ certs_dir }}/ca.crt', mode: '0755'}
+  #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+  tags: rob  
+- name: upload certs to node 2
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{item.mode}}"
+  with_items:
+    - { src: '/tmp/node2/node.crt',dest: '{{ certs_dir }}/node.crt', mode: '0755'}
+    - { src: '/tmp/node2/node.key',dest: '{{ certs_dir }}/node.key', mode: '0755'}
+    - { src: '/tmp/node2/ca.crt',dest: '{{ certs_dir }}/ca.crt', mode: '0755'}
+  #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+  tags: rob 
+- name: upload certs to node 3
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src: '/tmp/node3/node.crt',dest: '{{ certs_dir }}/node.crt', mode: '0755'}
+    - { src: '/tmp/node3/node.key',dest: '{{ certs_dir }}/node.key', mode: '0755'}
+    - { src: '/tmp/node3/ca.crt',dest: '{{ certs_dir }}/ca.crt', mode: '0755'}
+  #when: ansible_facts['nodename'] == 'Ansible_Redhat'      
+  tags: rob 

@@ -1,0 +1,21 @@
+---
+
+cockroach_version: '20.1.1'
+cockroach_arch: amd64
+cockroach_home: /home/crdbadmin
+cockroach_bin: /usr/local/bin/
+ca_dir: "{{ cockroach_home }}/my-safe-directory"
+certs_dir: "{{ cockroach_home }}/certs"
+node_01: 10.23.95.21
+node_01_host: Test-CRDB-01
+node_02: 10.23.95.25
+node_02_host: Test-CRDB-02
+node_03: 10.23.95.24
+node_03_host: Test-CRDB-03
+client_node: 10.23.95.26
+client_host: Ansible_Redhat
+lb_ip: 10.23.95.22
+lb_host: cockroachdb-dev-LB
+usergroup: cockroach
+osname: cockroach
+

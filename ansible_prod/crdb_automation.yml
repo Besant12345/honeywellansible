@@ -1,0 +1,38 @@
+---
+- hosts: crdb
+  become: yes
+  vars_files:
+    - vars.yml
+
+  tasks:
+#import binary playbook
+    - name: STEP 1 - run tasks from binary playbook
+      include_tasks: binary.yml
+
+#import binary playbook
+    - name: STEP 2 - run tasks from certs-create playbook
+      include_tasks: certs-create.yml
+      # tags:
+
+#import playbook to move certs from client machine to individual nodes
+    - name: STEP 3 - run tasks from certsUpload playbook
+      include_tasks: certsupload.yml
+      # tags: rob
+
+################################################################################################################################
+# Begin configuration on every cluster nodes
+
+#import binary playbook
+    - name: STEP 4 - run tasks from timesync playbook
+      include_tasks: timesync.yml
+      # tags:
+
+#import binary playbook
+    - name: STEP 5 - run tasks from crdb-systemd playbook
+      include_tasks: crdb-systemd.yml
+      # tags:
+#restore the latest backup 
+################################################################################################################################
+    - name: STEP 6 - Restoring the latest Backup
+      include_tasks: restore.yml
+      #tags 

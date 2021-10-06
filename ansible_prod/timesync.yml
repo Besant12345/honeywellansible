@@ -1,0 +1,62 @@
+    - name: Remove ntp
+      yum:
+        name: chrony
+        state: absent
+      when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: time
+
+    - name: Install ntp
+      yum:
+        name: chrony
+        state: present
+      when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: time
+
+    - name: Stop ntpd
+      systemd:
+        name: chronyd
+        state: stopped
+      when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: time
+
+    - name: Comment out current server info
+      replace:
+        path: /etc/chrony.conf
+        regexp: 'server'
+        replace: '#server'
+      when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: time
+
+    - name: Add new honeywell ntp server
+      lineinfile:
+        path: /etc/chrony.conf
+        line: "{{ item }}"
+      with_items:
+        - server ntp1.honeywell.com iburst
+        - server ntp2.honeywell.com iburst
+          #- tinker panic 0
+      when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: time
+
+    - name: Restart ntpd
+      systemd:
+        name: chronyd
+        state: restarted
+        enabled: yes
+      when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: time
+
+    - name: Sleep for 5 seconds and continue play 
+      pause:
+        seconds: 5
+      tags: time
+
+    - name: Check current time Synchronization
+      shell: chronyc -a makestep
+      register: "chrony"
+      when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: time
+
+    - debug: var=chrony.stdout_lines
+      when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      tags: time

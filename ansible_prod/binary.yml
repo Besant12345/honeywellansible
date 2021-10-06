@@ -1,0 +1,81 @@
+    - name: Create new cockroach user
+      user:
+        name: "{{ usergroup }}"
+      #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      # tags: end
+
+    - name: Create new cockroach group
+      group:
+        name: "{{ usergroup }}"
+      #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+      # tags: end
+      
+    - name: Create cockroach certs directories
+      file:
+        path: '{{ certs_dir }}'
+        state: directory
+        mode: '755'
+
+    - name: Create cockroach Nodes certs sub-directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '755'
+      with_items:
+        - '{{ certs_dir }}/node1/'
+        - '{{ certs_dir }}/node2/'
+        - '{{ certs_dir }}/node3/'
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+
+    - name: Create cockroach data directory
+      file:
+        path: "/var/lib/cockroach"
+        state: directory
+        owner: "{{ usergroup }}"
+        group: "{{ usergroup }}"
+        mode: '755'
+      #when: ansible_facts['nodename'] != 'Ansible_Redhat'
+
+    - name: Create cockroach ca directory
+      file:
+        path: "{{ ca_dir }}"
+        state: directory
+        mode: '755'
+      #when: ansible_facts['nodename'] == 'Ansible_Redhat'
+ 
+    - name: Open Port 443
+      firewalld: 
+        port: 443/tcp
+        zone: public
+        permanent: yes
+        state: enabled
+
+    - name: Reload Firewall
+      shell: firewall-cmd --reload
+
+    - name: upload binary zip to machines
+      copy:
+        src: "/tmp/cockroach-v{{ cockroach_version }}.linux-{{ cockroach_arch }}.tgz"
+        dest: "{{ cockroach_home }}"
+      tags: rob
+  
+    # - name: delete binary
+    #   shell: "rm -rf cockroach-v21.1.7.linux-amd64.tgz"
+    #   tags: rmnow
+
+    - name: Unzip binary
+      shell: "tar zxvf {{ cockroach_home }}/cockroach-v{{ cockroach_version }}.linux-{{ cockroach_arch }}.tgz -C {{ cockroach_home }}"
+
+    - name: Change permission
+      file:
+        path: "{{ cockroach_home }}/cockroach-v{{ cockroach_version }}.linux-{{ cockroach_arch }}/cockroach"
+        owner: "{{ osname }}"
+        group: "{{ osname }}"
+        mode: '755'
+
+    - name: Copy cockroach to local bin
+      copy:
+        src: "{{ cockroach_home }}/cockroach-v{{ cockroach_version }}.linux-{{ cockroach_arch }}/cockroach"
+        dest: "{{ cockroach_bin }}"
+        mode: '755'
+        remote_src: yes
